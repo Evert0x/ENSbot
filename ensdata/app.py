@@ -2,6 +2,12 @@ import settings
 import pytz
 from database import Domains
 from datetime import datetime
+import web3
+
+def get_price(address, duration):
+    return float(settings.Web3.fromWei(
+        settings.CONTRACT_ENS.functions.rentPrice(address, duration).call(),
+        "gwei"))
 
 def get_domains(address):
     filter = settings.CONTRACT_ENS_WS.events.NameRegistered.createFilter(

@@ -1,10 +1,9 @@
 from tg import main
-from watcher import run
-import time
+from threads.watcher import run
 import threading,settings
 import sys
 from server import app as flaskapp
-from msgqueue import run as msgrun
+from threads.msgqueue import run as msgrun
 threads = []
 
 def signal_handler(sig, frame):
