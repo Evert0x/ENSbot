@@ -1,9 +1,10 @@
 from tg import main
 from watcher import run
 import time
-import threading
+import threading,settings
 import sys
-
+from server import app as flaskapp
+from msgqueue import run as msgrun
 threads = []
 
 def signal_handler(sig, frame):
@@ -25,10 +26,13 @@ def create_app():
     t2 = threading.Thread(name="expire", target=run)
     t2.start()
     threads.append(t2)
-    return True
+
+    t3 = threading.Thread(name="msgqueue", target=msgrun)
+    t3.start()
+    threads.append(t3)
+    return flaskapp
 
 app = create_app()
 
 if __name__ == '__main__':
-    while app:
-        time.sleep(1)
+    app.run(settings.FLASK_HOST, settings.FLASK_PORT)

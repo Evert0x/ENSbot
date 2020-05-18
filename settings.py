@@ -17,3 +17,6 @@ with open(os.path.join("ensdata", "RegistrarController_abi.json")) as json_data:
 
 CONTRACT_ENS = ENDPOINT.eth.contract(address=ENS_ADDRESS, abi=ENS_ABI)
 CONTRACT_ENS_WS = ENDPOINT_WS.eth.contract(address=ENS_ADDRESS, abi=ENS_ABI)
+
+FLASK_HOST=config("FLASK_HOST")
+FLASK_PORT=config("FLASK_PORT", cast=int)

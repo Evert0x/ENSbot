@@ -15,9 +15,10 @@ def error(update, context, error):
 
 def handle_inline_result(bot, update):
     query = update.callback_query
-    print(query)
+    code = query.data.split("-", 1)[0]
+    result = database.Extend.add_callback(code)
     query.answer()
-    query.edit_message_text(text="Selected option: {}".format(query.data))
+    query.edit_message_text(text="Selected option: {}".format(result))
 
 def handle_update_message(bot, update):
     if update.message.text == "/start":
