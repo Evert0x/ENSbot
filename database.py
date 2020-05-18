@@ -1,5 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, BigInteger, String, Sequence, Boolean, DateTime, Integer, desc
+from sqlalchemy import Column, BigInteger, String, Sequence, Boolean, DateTime, \
+    Integer, desc, and_
 from sqlalchemy import create_engine, Table, MetaData, ForeignKey, text, bindparam, TIMESTAMP
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
@@ -49,7 +50,14 @@ class Extend(Base):
     msg_id = Column(Integer(), nullable=False)
     txhash = Column(String(127), nullable=True)
     text = Column(String(255), nullable=False)
+    error = Column(String(255), nullable=True, default=None)
     callback = Column(Boolean, nullable=False, default=False)
+    completed = Column(Boolean, nullable=False, default=False)
+
+
+    @staticmethod
+    def get(s, hash):
+        return s.query(Extend).filter(Extend.txhash==hash).first()
 
     @staticmethod
     def add(user, name, msg, codes=[]):
@@ -66,6 +74,22 @@ class Extend(Base):
         s.close()
 
     @staticmethod
+    def error_(code, error):
+        s = Session()
+        try:
+            obj = s.query(Extend).filter(Extend.code==code).first()
+            if not obj:
+                return None
+            Queue.delete(s, code)
+            obj.error = error
+            s.commit()
+            obj.action_when_error()
+            return
+        finally:
+            s.close()
+
+
+    @staticmethod
     def update(code, hash):
         s = Session()
         try:
@@ -79,32 +103,41 @@ class Extend(Base):
                 obj.action_when_valid()
                 return "valid"
             # queue invalid message
-            Queue.new(s, code, obj.userid, "You don't have the right client", obj.msg_id)
+            Queue.new(s, code, obj.userid, "You don't have the right client, please check the description. Normal client support soon (TM)", obj.msg_id)
             return "invalid"
         finally:
             s.close()
 
     @staticmethod
-    def add_callback(code):
-        s = Session()
+    def add_callback(s, code):
         try:
             obj = s.query(Extend).filter(Extend.code == code).first()
             if not obj:
                 return None
             obj.callback = True
             s.commit()
-            if obj.txhash:
+            if obj.txhash or obj.error:
                 Queue.delete(s, code)
+            if obj.txhash:
                 obj.action_when_valid()
-            Queue.new(s, code, obj.userid, "You don't have the right client", obj.msg_id)
-            return obj.text
+                return obj
+            Queue.new(s, code, obj.userid, "You don't have the right client, please check the description. Normal client support soon (TM)", obj.msg_id)
+            return obj
         finally:
-            s.close()
+            pass
 
     def action_when_valid(self):
         bot = Bot(settings.BOT_TOKEN)
         bot.send_message(
             text="Successfully initiated renewal of ENS domain!",
+            reply_to_message_id=self.msg_id,
+            chat_id=self.userid
+        )
+
+    def action_when_error(self):
+        bot = Bot(settings.BOT_TOKEN)
+        bot.send_message(
+            text="Received an error with your renewal %s" % self.error,
             reply_to_message_id=self.msg_id,
             chat_id=self.userid
         )
@@ -118,6 +151,7 @@ class Domains(Base):
     ethaddress = Column(String(64), nullable=False)
     domain = Column(String(255), nullable=False, unique=True)
     expires = Column(TIMESTAMP(timezone=False), nullable=False)
+    block = Column(Integer, nullable=False)
 
     @staticmethod
     def get_expires():
@@ -128,6 +162,18 @@ class Domains(Base):
         s.close()
         return data
 
+    @staticmethod
+    def get(domain, userid):
+        s = Session()
+        data = s.query(Domains).filter(and_(
+            (Domains.domain==domain), (Domains.userid==userid)
+        )).first()
+        s.close()
+        return data
+
+    @staticmethod
+    def get_all(s):
+        return s.query(Domains).all()
 
     @staticmethod
     def list(userid):

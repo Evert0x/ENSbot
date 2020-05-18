@@ -8,10 +8,9 @@ import uuid
 from ensdata.app import get_price
 from settings import Web3
 
-def do():
+def do(domain=None):
     bot = Bot(settings.BOT_TOKEN)
-    for expires in database.Domains.get_expires():
-
+    for expires in [domain] if domain else database.Domains.get_expires():
         w1 = str(uuid.uuid4()).replace("-", "")[:10]
         y1 = str(uuid.uuid4()).replace("-", "")[:10]
 
@@ -27,7 +26,7 @@ def do():
 
         msg = bot.send_message(
             chat_id=expires.userid, 
-            text="Your domain <b>%s.eth</b> is about to expire on %s, do you want to extend?" % (
+            text="Your domain <b>%s.eth</b> is expiring on %s, do you want to extend?" % (
                 expires.domain, expires.expires.ctime()),
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
                 text="1 year ($%s)" % year_price,
@@ -48,13 +47,11 @@ def do():
             [(y1, "1 year"), (w1, "1 week")]
         )
 
-    time.sleep(60)
-
-
 def run():
     t = threading.current_thread()
     while True:
         if not getattr(t, "do_run", True):
             return
         do()
+        time.sleep(60)
         time.sleep(1)

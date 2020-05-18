@@ -4,6 +4,7 @@ import threading,settings
 import sys
 from server import app as flaskapp
 from threads.msgqueue import run as msgrun
+from threads.renew import run as renewrun
 threads = []
 
 def signal_handler(sig, frame):
@@ -29,6 +30,10 @@ def create_app():
     t3 = threading.Thread(name="msgqueue", target=msgrun)
     t3.start()
     threads.append(t3)
+
+    t4 = threading.Thread(name="renew", target=renewrun)
+    t4.start()
+    threads.append(t4)
     return flaskapp
 
 app = create_app()

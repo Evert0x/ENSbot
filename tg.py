@@ -6,6 +6,7 @@ import time
 from ethadress import get_eth_address
 import database
 from ensdata.app import get_domains
+from threads.watcher import do
 
 import traceback
 def error(update, context, error):
@@ -16,9 +17,11 @@ def error(update, context, error):
 def handle_inline_result(bot, update):
     query = update.callback_query
     code = query.data.split("-", 1)[0]
-    result = database.Extend.add_callback(code)
+    s = database.Session()
+    result = database.Extend.add_callback(s, code)
     query.answer()
-    query.edit_message_text(text="Selected option: {}".format(result))
+    query.edit_message_text(text="Selected option: {} for {}.ens".format(result.text, result.domain))
+    s.close()
 
 def handle_update_message(bot, update):
     if update.message.text == "/start":
@@ -34,8 +37,17 @@ def handle_update_message(bot, update):
         update.message.reply_html(
             database.Domains.list(update.effective_user.id)
         )
+    elif "/renew" in update.message.text:
+        domain = update.message.text.split(" ")[1]
+        domain = domain.split(".")[0]
+        if domain:
+            d = database.Domains.get(domain, update.effective_user.id)
+            if d:
+                do(d)
+            else:
+                update.message.reply_text("Domain not found")
     else:
-        update.message.reply_text("Please try /start or /list")
+        update.message.reply_text("Please try /start, /list or /renew <your_domain>")
 
 def main():
     """Start the bot."""

@@ -7,7 +7,7 @@ MAPPER=config("MAPPER")
 
 # Ethereum
 NETWORK_ID = config('NETWORK', cast=int)
-
+ETHERSCAN = config('ETHERSCAN')
 ENDPOINT = Web3(HTTPProvider(config('PROVIDER')))
 ENDPOINT_WS = Web3(WebsocketProvider(config('PROVIDER_WS')))
 

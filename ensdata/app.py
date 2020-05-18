@@ -17,14 +17,14 @@ def get_domains(address):
             "owner": address
         }
     )
-
     rt = []
     for data in filter.get_all_entries():
         name = data["args"]["name"]
         expires = datetime.fromtimestamp(data["args"]["expires"], tz=pytz.UTC)
+        block = data["blockNumber"]
 
         q = settings.CONTRACT_ENS_WS.events.NameRenewed.createFilter(
-            fromBlock=0,
+            fromBlock=block,
             toBlock='latest',
             argument_filters={
                 "name": name
@@ -34,10 +34,12 @@ def get_domains(address):
             newtimestamp = datetime.fromtimestamp(renewal["args"]["expires"], tz=pytz.UTC)
             if newtimestamp > expires:
                 expires = newtimestamp
+                block = renewal["blockNumber"]
 
         rt.append(Domains(
             domain=name,
-            expires=expires
+            expires=expires,
+            block=block
         ))
 
     return rt
