@@ -1,4 +1,5 @@
 from tg import main
+from watcher import run
 import time
 import threading
 import sys
@@ -20,6 +21,10 @@ def create_app():
     t1 = threading.Thread(name="tgbot", target=main)
     t1.start()
     threads.append(t1)
+
+    t2 = threading.Thread(name="expire", target=run)
+    t2.start()
+    threads.append(t2)
     return True
 
 app = create_app()

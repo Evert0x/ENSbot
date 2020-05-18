@@ -1,0 +1,16 @@
+import settings
+a = settings.CONTRACT_ENS_WS.functions.renew
+print(a.__dict__)
+print(vars(a))
+print(a.__class__)
+print(dir(a))
+print(a.abi)
+print(a.address)
+print(a.args)
+print(a.arguments)
+print(a.call)
+print(a.factory)
+print(a.kwargs)
+print(a.web3)
+print(a.transact)
+print(a.transaction)
