@@ -28,6 +28,11 @@ def handle_update_message(bot, update):
         eth_adress = get_eth_address(update.effective_user.id)
         if not eth_adress:
             update.message.reply_text("Could not find linked ethereum address")
+            update.message.reply_text(
+                "Please talk to %s or download the following client: %s\n\n"
+                "Press /start after linking your address." % (
+                    "@EasyEthereum_bot", "https://github.com/Evert0x/Telegram"
+                ))
             return
         domains = get_domains(eth_adress)
         update.message.reply_html(
